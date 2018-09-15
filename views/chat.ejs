@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+ <html lang="zh-cn">
+     <%- include("./public/head.ejs")%>
+     <body>
+         <%- include("./public/header.ejs")%>
+         <section class="main-floatfix">
+             <%- include("./public/aside.ejs")%>
+             <section class="main-chat">
+                 <table border="0" cellpadding="2" cellspacing="0">
+                     <tr>
+                         <td style="width:680px">
+                          <section class="chatarea">
+                             <ul id="a">
+                                 <% if(messages){%>                            
+                                  <% for(var i=0;i<messages.length;i++){%>
+                                  <% if(messages[i].chatName!=user.authorName){%>
+                                     <li><img src="/<%= messages[i].touxiang%>" style="width:30px;height:30px">&nbsp;
+                                    <span style="position:relative;top:-16px;font-size:10px;"><%= messages[i].chatName%></span>
+                                    <span style="width:70px;overflow:auto;background-color:rgba(255,255,255,0.7);padding:3px;font-size:15px;position:relative;top:12px;left:-32px;border-radius:7px;"><%- messages[i].message%></span>
+                                    </li>
+                                    <br>
+                                    <br>
+                                  <%}else{%>
+                                    <li style="position:relative;left:530px">
+                                    <!--<span style="position:;top:-16px;font-size:10px;"><%= messages[i].chatName%></span>-->
+                                    <span style="width:70px;overflow:auto;background-color:rgba(0,0,220,0.2);padding:3px;font-size:15px;position:absolute;right:590px;top:9px;border-radius:7px;"><%- messages[i].message%></span>
+                                    <img src="/<%= messages[i].touxiang%>" style="width:30px;height:30px;left:10px;position:absolute">
+                                    </li>
+                                    <br>
+                                    <br>
+                                    <br>
+                                 <%}%>
+                                <%}%>
+                                <%}%>
+                            </ul>
+                          </section>
+                         </td>
+                         <td style="width:150px;">
+                             <span style="margin-left:60px;font-weight:bold;position:relative;top:-135px;">用户列表</span>
+                             <div class="user" style="margin-left:40px;position:relative;top:-120px">
+                                <ul>
+                                    <%if(names){%>
+                                    <% for(var i=0;i<names.length;i++){%>
+                                    <li><img src="/<%= names[i].touxiang%>" style="width:20px;height:20px;">&nbsp;<span style="position:relative;top:-6px"><%= names[i].name%></span></li>
+                                    <%}%>
+                                            <%}%>
+                                </ul>
+                                 
+                            </div>
+                         </td>
+                     </tr>
+                     <tr>
+                         <td>
+                          <section class="sendMsg">
+                               <span class="emotion"><img src="/img/emotion.png" style="margin-left:20px;margin-top:2px;border:1px solid black"></span>
+                                <input type="text" name="msg" id="msg">
+                              <input type="hidden" name="text" id="text">
+                              <button id="send" onclick="sendMsg()">发送</button>
+                          </section>
+                         </td>
+                         <td><button onclick="exitClick()" id="exit">退出</button></td>
+                     </tr>
+                 </table>
+             </section>
+         </section>
+         <%- include("./public/footer.ejs")%>
+         <script>
+             
+            var chat=document.getElementsByClassName("chatarea"); 
+            var user=document.getElementsByClassName("user");
+            var name="<%= user.authorName%>"
+            var ip="<%= user.ip%>"
+            var touxiang="<%= user.touxiang%>"
+            var msgText=document.getElementById('msg');
+             //转为表情图
+             function replace_em(str){
+                    str = str.replace(/\</g,'&lt;');
+                    str = str.replace(/\>/g,'&gt;');
+                    str = str.replace(/\n/g,'<br/>');
+                    str = str.replace(/\[em_([0-9]*)\]/g,'<img src="/arclist/$1.gif" border="0" />');
+                    return str;
+                }
+             $(function(){
+                 $('.emotion').qqFace({
+                     
+                     assign:'msg',//表情添加
+                     path:'/arclist/'
+                 })
+                 
+             })
+            function changeTimeStyle(){
+               var Time=new Date();
+                return Time.getTime();
+            }
+            
+            //添加聊天信息
+             function addMsg(msg,name){
+                console.log(name+":"+msg);
+                if(msg)
+                var time=changeTimeStyle();
+                var str=replace_em(msg);
+                console.log(str);
+                document.getElementById("text").value=str;
+                var xhr=new XMLHttpRequest();
+                xhr.open('get',"http://"+ip+":3000/chatmsg/?message="+str+"&name="+name+"&time="+time);
+                xhr.send();
+                if(chat.scrollHeight>chat.clientHeight){//消息超过指定高度就显示滚动条
+                    chat.scrollTop=chat.scrollHeight-chat.clientHeight;
+                }
+                if(chat.scrollWidth>chat.clientWidth){
+                    chat.scrollLeft=chat.scrollWidth-chat.clientWidth;
+                }
+                window.location.href="http://"+ip+":3000/chat";
+                }
+            /*function addMsg(msg,name){
+                console.log(name+":"+msg);
+                if(msg)
+                var time=changeTimeStyle();
+                var str=replace_em(msg);
+                console.log(str);
+                document.getElementById("text").value=str;
+                var li=document.createElement('li');
+                li.style.cssText="position:relative;left:530px";
+                li.innerHTML=`<span style="width:70px;overflow:auto;background-color:rgba(0,0,220,0.2);padding:3px;font-size:15px;position:absolute;right:590px;top:9px;border-radius:7px;">${msg}</span>
+                <img src="/${touxiang}" style="width:30px;height:30px;left:10px;position:absolute">`;
+                document.getElementById('a').appendChild(li);
+                if(chat.scrollHeight>chat.clientHeight){//消息超过指定高度就显示滚动条
+                    chat.scrollTop=chat.scrollHeight-chat.clientHeight;
+                }
+                if(chat.scrollWidth>chat.clientWidth){
+                    chat.scrollLeft=chat.scrollWidth-chat.clientWidth;
+                }
+                //window.location.href="http://"+ip+":3000/chat";
+                }*/
+             //发送消息
+            function sendMsg(){
+                var msg=msgText.value;
+                if(msg.length>0){
+                    socket.emit("chat",{user:name,msg:msg});
+                    msgText.value='';
+                }
+            }
+            //退出登录
+            function exitClick(){
+                socket.emit('exit',name);
+                socket.disconnect();
+                socket.removeAllListeners('connect');
+                io.socket=[];
+                window.location.href="http://"+ip+":3000";
+                
+                document.getElementById("send").disabled=true;
+                document.getElementById("exit").disabled=true;
+            }
+
+                var socket=io.connect();
+                socket.emit('login',name);
+                document.getElementById("send").disabled='';
+                document.getElementById("exit").disabled='';
+                socket.on('connect',function(){
+                    console.log("connects");
+                    socket.on('login',function(entername){
+                        var xhr=new XMLHttpRequest();
+                        xhr.open('get',"http://"+ip+":3000/chatmsg/?entername="+entername);
+                        xhr.send();
+                        window.location.href="http://"+ip+":3000/chat";
+                        if(name==entername){
+                          alert("欢迎进入聊天室");
+                        }
+                    });
+                    socket.on("sendClients",function(names){//更新用户列表
+                        var str="";
+                        names.forEach(function(name){str+=name+"<br>"});
+                        console.log(str);
+                    });
+                    socket.on('chat',function(data){//添加聊天信息
+                        addMsg(data.msg,data.user);
+                    });
+
+                    socket.on('exit',function(exitname){
+                         var xhr=new XMLHttpRequest();
+                         xhr.open('get',"http://"+ip+":3000/chatmsg/?exitname="+exitname);
+                         xhr.send();
+                            if(exitname!=name){
+                            alert("用户"+exitname+"退出聊天室");
+                                window.location.href="http://"+ip+":3000/chat";
+                            }
+                            
+                    });
+                });
+             socket.on('disconnect',function(){
+                 
+             })
+                socket.on('error',function(err){
+                    alert("与服务器连接发生错误");
+                    socket.disconnect();
+                    socket.removeAllListeners('connect');
+                    io.sockets=[];
+                })
+         </script>
+     </body>
+</html>

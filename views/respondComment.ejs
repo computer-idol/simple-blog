@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+ <html lang="zh-cn">
+     <%- include("./public/head.ejs")%>
+     <body>
+         <%- include("./public/header.ejs")%>
+         <section class="main-floatfix">
+             <%- include("./public/aside.ejs")%>
+             <section class="main-articles" style="margin-left:400px;width:600px;">
+                  <form method="post" action="" class="edit" onSubmit="save()">
+                      <p style="background-color:rgba(0,0,0,0.2);overflow:auto;height:100px;position:relative;width:500px;left:60px">
+                          <span style="position:relative;top:5px;left:-30px">回复第<%= respondLoushu%>楼的@<span style="color:blue;"><%= respondName%></span>的评论</span>
+                          <span style="position:relative;top:40px;left:-160px;color:grey"><%- respondContent%></span>
+                          <span style="position:relative;top:70px;left:-300px">来自:<span style="color:blue"><%= title%></span></span>
+                      </p>
+                      <div class="text-group">
+                          <span style="margin-left:18px;">评论</span><span class="emotion"><img src="/img/emotion.png" style="margin-left:20px;margin-top:2px;border:1px solid black"></span>
+                          <br>
+                          <textarea name="content" id="content" style="width:600px;height:300px"></textarea>
+                          <input type="hidden" id="text" name="text">
+                      </div>
+                      <p><input type="submit" value="发表" class="btn btn-primary"></p>
+                 </form>
+             </section>
+         </section>
+         <%- include("./public/footer.ejs")%>
+         <script>
+              function save(){
+                     console.log($("#content").val())
+                     var str=replace_em($("#content").val());
+                     console.log(str);
+                     document.getElementById("text").value=str;
+                 }
+             //转为表情图
+             function replace_em(str){
+                    str = str.replace(/\</g,'&lt;');
+                    str = str.replace(/\>/g,'&gt;');
+                    str = str.replace(/\n/g,'<br/>');
+                    str = str.replace(/\[em_([0-9]*)\]/g,'<img src="/arclist/$1.gif" border="0" />');
+                    return str;
+                }
+             $(function(){
+                 $('.emotion').qqFace({
+                     
+                     assign:'content',//表情添加
+                     path:'/arclist/'
+                 })
+                 
+             })
+         </script>
+     </body>
+</html>

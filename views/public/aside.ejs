@@ -1,0 +1,45 @@
+<aside>
+    <section class="main-aside-avatar">
+        <% if(!user){%>
+        <img src="img/avater.jpg" alt="未登录">
+        <% }else{%>
+        <% if(user.touxiang==="kong"){%>
+        <img src="img/avater.jpg" alt="没有头像，请上传" id="img">
+        <form action="/" method="post" id="form" enctype="multipart/form-data">
+            <a href="#" class="file">选择头像
+                <input type="file" name="file">
+            </a>
+            <input type="submit" value="上传" id="up" >
+        </form>
+        <% }else{%>
+           <img src="/<%= user.touxiang%>" onclick="changeTouxiang()">
+        <% }%>
+        <% }%>
+        <div id="change" style="display:none">
+              <form action="/change" method="post" id="form" enctype="multipart/form-data">
+            <a href="#" class="file">选择头像
+                <input type="file" name="file">
+            </a>
+            <input type="submit" value="上传" id="up" >
+        </form>
+        </div>
+    </section>
+    <ul>
+        <li><a href="/">博客首页</a></li>
+        <li><a href="/edit">撰写文章</a></li>
+        <li><a href="/chat">聊天大厅</a></li>
+        <li><a href="/chess">五子棋对战</a></li>
+        <li><a href="/aboutBlog">关于博客</a></li>
+        <li><a href="/friendsLink">友情链接</a></li>
+        <% if(user){%>
+        <li><a href="/logout">登出博客</a></li>
+        <% }else{%>
+        <li><a href="/login">登录博客</a></li>
+        <% }%>
+    </ul>
+    <script>
+        function changeTouxiang(){
+           document.getElementById("change").style.display="block"; 
+        }
+    </script>
+</aside>

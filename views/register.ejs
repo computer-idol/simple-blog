@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+  <html lang="zh-cn" class="zhuce">
+      <%- include("./public/head.ejs")%>
+      <body>
+          <section>
+              <form method="POST" action="/zhuce">
+                  <div class="form-group">
+                      <input type="text" name="name" placeholder="账号">
+                  </div>
+                  <div class="form-group">
+                      <input type="mail" name="mail" placeholder="QQ或163邮箱">
+                  </div>
+                  <div class="form-group">
+                      <input type="password" name="password" placeholder="密码格式为6-10位数字">
+                      <%if(msg){%>
+                      <p><%= msg%></p>
+                      <% } %>
+                  </div>
+                  <div class="form-group">
+                      <input type="submit" value="保存">
+                  </div>
+              </form>
+          </section>
+          <%- include("./public/footer.ejs")%>
+          
+      </body>
+  </html>

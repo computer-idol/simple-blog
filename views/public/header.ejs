@@ -1,0 +1,7 @@
+<header>
+    <% if(user){%>
+    <h1>欢迎你,<%=user.authorName%></h1>
+    <% }else{%>
+    <h1><a href="/login" style="color:white">未登录,点我去登录</a></h1>
+    <% }%>
+</header>

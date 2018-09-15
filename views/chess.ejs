@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+ <html lang="zh-cn">
+     <%- include("./public/head.ejs")%>
+     <body>
+         <%- include("./public/header.ejs")%>
+         <section class="main-floatfix">
+             <%- include("./public/aside.ejs")%>
+             <section class="main-chess">
+                 <table border="0" cellpadding="2" cellspacing="0">
+                     <tr>
+                         <td style="width:650px">
+                            <canvas id="myCanvas" width="480" height="480"></canvas>
+                         </td>
+                     </tr>
+                 </table>
+                 <button id="begin">开始</button>
+                 <button id="exit" onclick="exitGame()">退出</button>
+                 <div id="user">
+                     用户列表
+                     <!--<ul>
+                        <% if(names.length>0){ 
+                              if(names.length==1){%>
+                                 <li style="color:red"><%=names[0].name%></li>
+                              <%}else if(names.length==2){%>
+                                <li style="color:red"><%=names[0].name%></li>
+                                <li style="color:red"><%=names[1].name%></li>
+                              <%}else{%>
+                                 <li style="color:red"><%=names[0].name%></li>
+                                 <li style="color:red"><%=names[1].name%></li>
+                               <% for(var i=2;i<names.length;i++){%>
+                                  <li><%=names[i].name%></li>
+                               <%}%>
+                         <%}%>
+                         <%}%>
+                     </ul>-->
+                 </div>
+             </section>
+         </section>
+         <%- include("./public/footer.ejs")%>
+         <script>
+             var myCanvas=document.getElementById('myCanvas');
+             var cxt=myCanvas.getContext('2d');
+             var btn=document.getElementById('begin')
+             var geziWidth=30;//格子宽度
+             var jianGe=15;//与边界间隔
+             var banJin=Math.floor(geziWidth/3); //棋子半径
+             var name="<%= user.authorName%>"
+             var ip="<%= user.ip%>"
+             var ifbegin=false;//棋局是否开始
+             var ifover=false;//棋局是否结束
+             var remainGezi;//剩下的格子
+             
+             //客户端的初始量
+             var client={};
+             client.ifplay=false;
+             client.useqizi="";
+             
+             var chess=[];//棋盘落点
+             var win=[];
+             var blackWin=[];//黑方胜利
+             var whiteWin=[];//白方胜利
+             var count=0;//赢法总数
+                
+             //画棋盘
+             function drawBoard(widthGezi,heightGezi){//画棋盘  
+                for(i=0;i<widthGezi;i++){
+                        cxt.beginPath();
+                        cxt.moveTo(jianGe,i*geziWidth+jianGe);
+                        cxt.lineTo((widthGezi-1)*geziWidth+jianGe,i*geziWidth+jianGe);
+                        cxt.closePath();
+                        cxt.stroke();
+                    }   
+                      for(j=0;j<heightGezi;j++){
+                          cxt.beginPath();
+                          cxt.moveTo(j*geziWidth+jianGe,jianGe);
+                          cxt.lineTo(j*geziWidth+jianGe,(heightGezi-1)*geziWidth+jianGe);
+                          cxt.closePath();
+                          cxt.stroke();
+                      }
+                      for(i=0;i<widthGezi-1;i++){
+                          for(j=0;j<heightGezi-1;j++){    
+                             cxt.fillStyle="yellow";
+                               cxt.fillRect(i*geziWidth+1+jianGe,j*geziWidth+1+jianGe,geziWidth-2,geziWidth-2);     
+                      } 
+                      }
+                 remainGezi=widthGezi*heightGezi;
+            }
+             
+             //初始化棋盘的二维数组
+             function initchess(widthGezi,heightGezi){
+                 for (var i=0;i<widthGezi;i++){//初始化数组
+                      chess[i]=[];
+                      for(var j=0;j<heightGezi;j++){
+                       chess[i][j]=0;
+                    }
+              }
+             }
+             
+             //初始化赢得数组
+             function initwin(widthGezi,heightGezi){
+                 for (var i=0;i<widthGezi;i++){//初始化赢的数组
+                    win[i]=[];
+                    for(var j=0;j<heightGezi;j++){
+                        win[i][j]=[];
+                    }
+                }
+                for(var i=0;i<widthGezi;i++){//所有的横线赢法
+                    for(var j=0;j<heightGezi-4;j++){
+                        for(var k=0;k<5;k++){
+                            win[i][j+k][count]=true;
+                        }
+                        count++;
+                    }
+                }
+                for(var i=0;i<widthGezi;i++){//所有的竖线赢法
+                    for(var j=0;j<heightGezi-4;j++){
+                        for(var k=0;k<5;k++){
+                            win[j+k][i][count]=true;
+                        }
+                        count++;
+                    }
+                }
+                for(var i=0;i<widthGezi-4;i++){//所有的正斜线赢法
+                    for(var j=0;j<heightGezi-4;j++){
+                        for(var k=0;k<5;k++){
+                            win[i+k][j+k][count]=true;
+                        }
+                        count++;
+                    }
+                }
+                for(var i=0;i<widthGezi-4;i++){//所有的反斜线赢法
+                    for(var j=heightGezi-1;j>3;j--){
+                        for(var k=0;k<5;k++){
+                            win[i+k][j-k][count]=true;
+                        }
+                        count++;
+                    }
+                }
+             }
+             
+             drawBoard(16,16);
+             initchess(16,16);
+             initwin(16,16);
+             for(var i=0;i<count;i++){//初始化双方赢得数组
+                 blackWin[i]=0;
+                 whiteWin[i]=0;
+             }
+             console.log(remainGezi);
+             //更新用户列表
+             function addName(name){
+                //var xhr=new XMLHttpRequest();
+                //xhr.open('get',"http://"+ip+":3000/playname/?name="+name);
+                //xhr.send();
+                //window.location.href="http://"+ip+":3000/chess"; 
+                 document.getElementById('user').innerHTML=name;
+             }
+             
+             function exitGame(){
+                socket.emit('exitgame',name);
+                io.disconnect();
+                window.location.href="http://"+ip+":3000/";
+            }
+             myCanvas.onclick=function(event){
+                 console.log(event.offsetX);
+                 console.log(0);
+                 if(!ifbegin){
+                     console.log(1);
+                     
+                     return;
+                 }
+                 if(ifover){
+                     console.log(2);
+                     return;
+                 }
+                 if(!client.ifplay){
+                     console.log(3)
+                     return;
+                 }
+                 if(client.useqizi!="black"&&client.useqizi!="white"){//说明当前是观众
+                     console.log(4)
+                     return;
+                 }else{
+                     console.log(5);
+                     var setx=(event.offsetX-jianGe)%geziWidth<(geziWidth/2)?Math.floor((event.offsetX-jianGe)/geziWidth):Math.floor((event.offsetX-jianGe)/geziWidth)+1;
+                     var sety=(event.offsetY-jianGe)%geziWidth<(geziWidth/2)?Math.floor((event.offsetY-jianGe)/geziWidth):Math.floor((event.offsetY-jianGe)/geziWidth)+1;
+                     var x=setx*geziWidth+jianGe;
+                     var y=sety*geziWidth+jianGe;
+                     var m=setx;
+                     var n=sety;
+                     console.log(x);
+                     if(client.useqizi=="black"){
+                         if(!chess[n][m]){
+                             chess[n][m]=1;
+                             remainGezi--;
+                             cxt.fillStyle="black";
+                             cxt.beginPath();
+                             cxt.arc(x,y,banJin,0,Math.PI*2,false);
+                             cxt.closePath();
+                             cxt.fill();
+                             var data={'x':x,'y':y,'useqizi':'black'};
+                             socket.emit('play',data);
+                             console.log(count);
+                             for(var k=0;k<count;k++){
+                                 if(win[n][m][k]){
+                                     blackWin[k]++;
+                                     console.log(blackWin[k])
+                                 }
+                                 console.log(blackWin[k]);
+                                 if(blackWin[k]==5){
+                                     ifover=true;
+                                     var data1={'thing':'win','name':name}
+                                     socket.emit('over',data1);
+                                 }
+                                 else if(remainGezi==0){
+                                     ifover=true;
+                                     var data2={'thing':'ping'}
+                                     socket.emit('over',data2)
+                                 }
+                             }
+                         }
+                         
+                     }
+                     else if(client.useqizi=="white"){
+                         if(!chess[n][m]){
+                             chess[n][m]=1;
+                             remainGezi--;
+                             cxt.fillStyle="white";
+                             cxt.beginPath();
+                             cxt.arc(x,y,banJin,0,Math.PI*2,false);
+                             cxt.closePath();
+                             cxt.fill();
+                             var data={'x':x,'y':y,'useqizi':'white'};
+                             socket.emit('play',data);
+                             for(var k=0;k<count;k++){
+                                 if(win[n][m][k]){
+                                     whiteWin[k]++;
+                                 }
+                                 console.log(whiteWin[k])
+                                 if(whiteWin[k]==5){
+                                     ifover=true;
+                                     var data3={'thing':'win','name':name}
+                                     socket.emit('over',data3);
+                                 }
+                                 else if(remainGezi==0){
+                                     ifover=true;
+                                     var data4={'thing':'ping'}
+                                     socket.emit('over',data4)
+                                 }
+                             }
+                         }
+                         
+                     }
+                 }
+                 
+             }
+             btn.onclick=function(){
+                  socket.emit('begin',name);
+                  btn.disabled=true;
+                  btn.style.cssText="background-color:rgba(50,50,50,0.2)"
+             }
+             
+                 var socket=io.connect(); 
+               socket.emit('enter',name)
+             socket.on('connect',function(){
+                 socket.on('enter',function(names){
+                     addName(names[names.length-1]);
+                     if(names.length==1){
+                         alert("人数不足,需等待他人");
+                         btn.disabled=true;
+                     }
+                     else if(names.length>=2){
+                         alert("人数已足，可以点击开始进行对战");
+                         if(names[0]==name){//如果当前客户端是第一个进入的人
+                         }
+                         else if(names[1]==name){
+                             }
+                         else if(names[0]!=name&&names[1]!=name){//当前进入房间人数超过两个的作为观战者
+                             alert("你可以进行观战");
+                             ifbegin=false;
+                             client.ifplay=false;
+                             btn.style.display="none";
+                         }
+                     }
+                 });
+                 socket.on('begin',function(names){
+                     if(names.length==1){
+                         if(names[0]==name){
+                           alert("等待另一个人点击开始");
+                         }
+                        
+                     }
+                     if(names.length==2){
+                         if(names[0]==name||names[1]==name){
+                           ifbegin=true;
+                             alert("游戏开始")
+                             if(names[0]==name){
+                                 client.useqizi="black";
+                                 client.ifplay=true;
+                                 alert("你使用的是黑子")
+                             }
+                             else{
+                                 client.ifplay=false;
+                                 client.useqizi="white";
+                                 alert("你使用的是白子")
+                             }
+                         }
+                     }
+                 })
+                 socket.on('play',function(data){
+                     var x=data.x;
+                     var y=data.y;
+                     var qizi=data.useqizi;
+                     if(client.useqizi!=qizi){
+                         client.ifplay=true;
+                         var m=(x-jianGe)/geziWidth;
+                         var n=(y-jianGe)/geziWidth;
+                         chess[n][m]=1;
+                         cxt.fillStyle=qizi;
+                         cxt.beginPath();
+                         cxt.arc(x,y,banJin,0,Math.PI*2,false);
+                         cxt.closePath();
+                         cxt.fill();
+                     }
+                     else{
+                         client.ifplay=false;
+                     }
+                 });
+                 socket.on('over',function(data){
+                     
+                     if(data.thing=='win'){
+                         if(data.name==name){
+                             alert("恭喜你获得胜利");
+                             var x=confirm('你还想继续下吗');
+                             if(x==true){
+                                 window.location.href="http://"+ip+":3000/chess";
+                             }
+                             else{
+                                 window.location.href="http://"+ip+":3000/";
+                                 socket.emit('exitgame',name);
+                             }
+                         }
+                         else{
+                             if(client.useqizi!=""){
+                                 alert("你被击败了");
+                                 var x=confirm('你还想继续下吗');
+                                 if(x==true){
+                                     window.location.href="http://"+ip+":3000/chess";
+                                 }
+                                 else{
+                                     window.location.href="http://"+ip+":3000/";
+                                     socket.emit('exitgame',name);
+                                 }
+                             }
+                             else{
+                                 alert("本局获胜方是"+name);
+                             }
+                         }
+                     }
+                     else{
+                         alert("这局是平局");
+                         var x=confirm('你还想继续下吗');
+                         if(x==true){
+                            window.location.href="http://"+ip+":3000/chess";
+                         }
+                         else{
+                             window.location.href="http://"+ip+":3000/";
+                             socket.emit('exitgame',name);
+                         }
+                     }
+                 })
+                 socket.on('exitname',function(dropname){
+                    var xhr=new XMLHttpRequest();
+                    xhr.open('get',"http://"+ip+":3000/dropname/?name="+dropname);
+                    xhr.send();
+                     if(dropname!=name){
+                       window.location.href="http://"+ip+":3000/chess";
+                     }
+                 })
+             })
+         </script>
+     </body>
+</html>
